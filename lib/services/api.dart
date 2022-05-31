@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:chatappfrontend/models/chatroom_model.dart';
 import 'package:chatappfrontend/models/user_model.dart';
 import 'package:http/http.dart';
 
@@ -44,6 +45,20 @@ class API {
     }
 
     return users;
+  }
+
+  static Future<ChatroomModel?> createRoom(ChatroomModel chatroomModel) async {
+    Uri requestUri = Uri.parse(baseURL + "/chat/createroom");
+
+    Response response = await post(requestUri, body: jsonEncode(chatroomModel.toJson()), headers: headers);
+    dynamic decoded = jsonDecode(response.body);
+
+    if(decoded["success"] == true) {
+      ChatroomModel newChatroom = ChatroomModel.fromJson(decoded["data"]);
+      return newChatroom;
+    }
+
+    return null;
   }
 
 }

@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:chatappfrontend/models/chatroom_model.dart';
 import 'package:chatappfrontend/models/message_model.dart';
 import 'package:chatappfrontend/models/user_model.dart';
+import 'package:chatappfrontend/services/api.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart';
@@ -25,13 +27,35 @@ class _ChatScreenState extends State<ChatScreen> {
   List<MessageModel> messages = [];
   TextEditingController msgController = TextEditingController();
 
+  bool isLoading = true;
+  ChatroomModel? chatroomModel;
+
+  void initializeChatroom() async {
+    ChatroomModel newChatroom = ChatroomModel(
+      chatroomid: Uuid().v1(),
+      participants: [ widget.myUser.id, widget.targetUser.id ]
+    );
+
+    ChatroomModel? savedChatroom = await API.createRoom(newChatroom);
+    if(savedChatroom != null) {
+      chatroomModel = savedChatroom;
+
+      // Send event to socket
+      socket!.emit("join-room", savedChatroom.chatroomid);
+    }
+    else {
+      // SHOW ERROR
+      log("Can't load chatroom");
+    }
+  }
+
   void sendMessage() async {
     String message = msgController.text.trim();
     msgController.clear();
 
-    if(message != "") {
+    if(message != "" && chatroomModel != null) {
       MessageModel messageModel = MessageModel(
-        chatroomid: "xyz", //TODO: Replace
+        chatroomid: chatroomModel!.chatroomid.toString(),
         messageid: Uuid().v1(),
         msg: message,
         sender: widget.myUser.userid,
@@ -47,6 +71,8 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void initializeSocketConnection() async {
+    log(widget.myUser.toJson().toString());
+
     socket = io("http://192.168.1.202:5000", OptionBuilder().setTransports(['websocket']).build());
 
     socket!.onConnect((socket) {
@@ -60,6 +86,7 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     socket!.on("new-message", (data) {
+      log("New message received");
       dynamic decodedData = jsonDecode(data);
       MessageModel messageModel = MessageModel.fromJson(decodedData);
       setState(() {
@@ -74,6 +101,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     initializeSocketConnection();
+    initializeChatroom();
   }
 
   @override
@@ -109,7 +137,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   vertical: 10
                 ),
                 child: ListView.builder(
-                  reverse: true,
                   physics: BouncingScrollPhysics(
                     parent: AlwaysScrollableScrollPhysics()
                   ),
@@ -117,14 +144,14 @@ class _ChatScreenState extends State<ChatScreen> {
                   itemBuilder: (context, index) {
 
                     return Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisAlignment: (messages[index].sender == widget.myUser.userid) ? MainAxisAlignment.end : MainAxisAlignment.start,
                       children: [
                         Container(
                           constraints: BoxConstraints(
                             maxWidth: MediaQuery.of(context).size.width / 1.5
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.blue,
+                            color: (messages[index].sender == widget.myUser.userid) ? Colors.blue : Colors.grey,
                             borderRadius: BorderRadius.circular(7)
                           ),
                           margin: EdgeInsets.symmetric(
