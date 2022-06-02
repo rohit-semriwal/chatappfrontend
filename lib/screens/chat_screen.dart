@@ -33,8 +33,10 @@ class _ChatScreenState extends State<ChatScreen> {
   void initializeChatroom() async {
     ChatroomModel newChatroom = ChatroomModel(
       chatroomid: Uuid().v1(),
-      participants: [ widget.myUser.id, widget.targetUser.id ]
+      participants: [ widget.myUser, widget.targetUser ]
     );
+
+    log("We wrote: " + newChatroom.toJson().toString());
 
     ChatroomModel? savedChatroom = await API.createRoom(newChatroom);
     if(savedChatroom != null) {

@@ -24,7 +24,7 @@ class _SearchScreenState extends State<SearchScreen> {
       isLoading = true;
     });
     String email = searchController.text.trim();
-    users = await API.searchUser(email);
+    users = await API.searchUser(email, widget.myUser.email.toString());
     setState(() {
       isLoading = false;
     });

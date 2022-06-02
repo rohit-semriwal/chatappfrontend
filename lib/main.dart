@@ -1,5 +1,6 @@
 import 'package:chatappfrontend/constants/themes.dart';
 import 'package:chatappfrontend/models/user_model.dart';
+import 'package:chatappfrontend/providers/chat_provider.dart';
 import 'package:chatappfrontend/providers/theme_provider.dart';
 import 'package:chatappfrontend/screens/home_screen.dart';
 import 'package:chatappfrontend/screens/login_screen.dart';
@@ -45,8 +46,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    return ChangeNotifierProvider(
-      create: (context) => ThemeProvider(theme),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => ThemeProvider(theme),
+        ),
+
+        ChangeNotifierProvider(
+          create: (context) => ChatProvider(),
+        ),
+      ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
           return MaterialApp(

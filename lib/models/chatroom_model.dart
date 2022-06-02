@@ -1,3 +1,4 @@
+import 'package:chatappfrontend/models/user_model.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'chatroom_model.g.dart';
@@ -5,7 +6,7 @@ part 'chatroom_model.g.dart';
 @JsonSerializable()
 class ChatroomModel {
   String? chatroomid;
-  List<dynamic>? participants;
+  List<UserModel>? participants;
   dynamic lastmessage;
   DateTime? createdon;
 
