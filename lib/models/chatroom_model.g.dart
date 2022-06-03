@@ -12,7 +12,7 @@ ChatroomModel _$ChatroomModelFromJson(Map<String, dynamic> json) =>
       participants: (json['participants'] as List<dynamic>).map((userMap) {
         return UserModel.fromJson(userMap);
       }).toList(),
-      lastmessage: json['lastmessage'],
+      lastmessage: (json['lastmessage'] != null) ? MessageModel.fromJson(json['lastmessage']) : null,
       createdon: json['createdon'] == null
           ? null
           : DateTime.parse(json['createdon'] as String),
@@ -24,6 +24,6 @@ Map<String, dynamic> _$ChatroomModelToJson(ChatroomModel instance) =>
       'participants': instance.participants!.map((userModel) {
         return userModel.id;
       }).toList(),
-      'lastmessage': instance.lastmessage,
+      'lastmessage': (instance.lastmessage != null) ? instance.lastmessage!.id.toString() : null,
       'createdon': instance.createdon?.toIso8601String(),
     };

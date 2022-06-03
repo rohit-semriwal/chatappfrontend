@@ -111,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Text(targetUser.fullname![0].toString()),
                     ),
                     title: Text(targetUser.fullname.toString()),
-                    subtitle: Text("Say hi to your new friend!"),
+                    subtitle: (chatprovider.chatrooms[index].lastmessage != null) ? Text(chatprovider.chatrooms[index].lastmessage!.msg.toString()) : Text("Say hi to your new friend!"),
                   );
 
                 },

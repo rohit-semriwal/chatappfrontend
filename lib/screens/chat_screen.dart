@@ -4,9 +4,11 @@ import 'dart:developer';
 import 'package:chatappfrontend/models/chatroom_model.dart';
 import 'package:chatappfrontend/models/message_model.dart';
 import 'package:chatappfrontend/models/user_model.dart';
+import 'package:chatappfrontend/providers/chat_provider.dart';
 import 'package:chatappfrontend/services/api.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 import 'package:uuid/uuid.dart';
 import 'package:socket_io_client/socket_io_client.dart';
@@ -41,6 +43,13 @@ class _ChatScreenState extends State<ChatScreen> {
     ChatroomModel? savedChatroom = await API.createRoom(newChatroom);
     if(savedChatroom != null) {
       chatroomModel = savedChatroom;
+      Provider.of<ChatProvider>(context, listen: false).addChatroomIfNotExists(chatroomModel!);
+
+      // Load Initial Messages
+      List<MessageModel> _messages = await API.getMessages(chatroomModel!);
+      setState(() {
+        messages = _messages;
+      });
 
       // Send event to socket
       socket!.emit("join-room", savedChatroom.chatroomid);
@@ -60,7 +69,7 @@ class _ChatScreenState extends State<ChatScreen> {
         chatroomid: chatroomModel!.chatroomid.toString(),
         messageid: Uuid().v1(),
         msg: message,
-        sender: widget.myUser.userid,
+        sender: widget.myUser.userid.toString(),
         createdon: DateTime.now()
       );
 
@@ -68,14 +77,23 @@ class _ChatScreenState extends State<ChatScreen> {
         messages.add(messageModel);
       });
 
-      socket!.emit("new-message", jsonEncode(messageModel.toJson()));
+      bool success = await API.sendMessage(messageModel);
+      if(success) {
+        Provider.of<ChatProvider>(context, listen: false).updateLastMessage(chatroomModel!, messageModel);
+
+        socket!.emit("new-message", jsonEncode(messageModel.toJson()));
+      }
+      else {
+        log("Cannot send message!");
+      }
+      
     }
   }
 
   void initializeSocketConnection() async {
     log(widget.myUser.toJson().toString());
 
-    socket = io("http://192.168.1.202:5000", OptionBuilder().setTransports(['websocket']).build());
+    socket = io("http://192.168.1.200:5000", OptionBuilder().setTransports(['websocket']).build());
 
     socket!.onConnect((socket) {
       log("Connected to the server!");

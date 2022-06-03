@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:chatappfrontend/models/chatroom_model.dart';
+import 'package:chatappfrontend/models/message_model.dart';
 import 'package:chatappfrontend/models/user_model.dart';
 import 'package:http/http.dart';
 
 class API {
 
-  static String baseURL = "http://192.168.1.202:5000/api";
+  static String baseURL = "http://192.168.1.200:5000/api";
   static Map<String, String> headers = {
     "Content-type": "application/json"
   };
@@ -83,6 +84,49 @@ class API {
       return [];
     }
     
+  }
+
+  static Future<bool> sendMessage(MessageModel messageModel) async {
+
+    Uri requestUri = Uri.parse(baseURL + "/chat/sendmessage");
+
+    Response response = await post(requestUri, body: jsonEncode(messageModel.toJson()), headers: headers);
+    dynamic decoded = jsonDecode(response.body);
+
+    log(decoded.toString());
+
+    return decoded["success"];
+  }
+
+  static Future<List<MessageModel>> getMessages(ChatroomModel chatroom) async {
+    Uri requestUri = Uri.parse(baseURL + "/chat/fetchmessages");
+
+    Response response = await post(requestUri, body: jsonEncode(chatroom.toJson()), headers: headers);
+    dynamic decoded = jsonDecode(response.body);
+
+    if(decoded["success"] == true) {
+      List<MessageModel> messages = [];
+      for(dynamic messageMap in decoded["data"]) {
+        MessageModel messageModel = MessageModel.fromJson(messageMap);
+        messages.add(messageModel);
+      }
+      return messages;
+    }
+    else {
+      return [];
+    }
+    
+  }
+
+  static Future<bool> updateRoom(ChatroomModel chatroomModel) async {
+    Uri requestUri = Uri.parse(baseURL + "/chat/updateroom");
+
+    log(chatroomModel.toJson().toString());
+
+    Response response = await put(requestUri, body: jsonEncode(chatroomModel.toJson()), headers: headers);
+    dynamic decoded = jsonDecode(response.body);
+
+    return decoded["success"];
   }
 
 }
